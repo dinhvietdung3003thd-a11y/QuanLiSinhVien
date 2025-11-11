@@ -34,7 +34,8 @@ public class Main {
                     System.out.println("1. Thêm");
                     System.out.println("2. Sửa");
                     System.out.println("3. Xóa");
-                    System.out.println("4. Hiển thị tất cả");
+                    System.out.println("4. tìm kiếm");
+                    System.out.println("5. Hiển thị tất cả");
                     System.out.print("Chọn: ");
                     int c = Integer.parseInt(sc.nextLine());
                     switch (c) {
@@ -54,10 +55,37 @@ public class Main {
                             System.out.print("Mã SV cần xóa: "); String id = sc.nextLine();
                             studentService.deleteStudent(id);
                         }
-                        case 4 -> studentService.showAll();
+                        case 4 -> {
+                        		   System.out.println("\n----tìm kiếm----");
+                        		   System.out.println("1. Theo tên");
+                        		   System.out.println("2. Theo Mã SV");
+                        		   int d = Integer.parseInt(sc.nextLine());
+                               	switch (d) {
+                               	   case 1 -> {
+                               		   System.out.print("tên sinh viên cần tìm: ");  String name = sc.nextLine();
+                               		   Student s = studentService.findStudentbyName(name);
+                               		   if(s != null) {
+                               			   System.out.print(s);
+                               		   } else {
+                               			   System.out.println("không có sinh viên cần tìm !");
+                               		   }
+                               		   
+                               	   }
+                               	   case 2 -> {
+                               		   System.out.print("ma sinh vien can tim: "); String id = sc.nextLine();
+                               		   Student s = studentService.findStudent(id);
+                               		   if(s != null) {
+                             			   System.out.print(s);
+                             		   } else {
+                             			   System.out.println("không có sinh viên cần tìm !");
+                             		   }
+                               	   }
+                        	   }
+                        	}
+                        case 5 -> studentService.showAll();
                     }
                 }
-
+      
                 case 2 -> {
                     System.out.println("\n--- Quản lý môn học ---");
                     System.out.println("1. Thêm môn");
