@@ -80,9 +80,11 @@ public class Main {
                              			   System.out.println("không có sinh viên cần tìm !");
                              		   }
                                	   }
+                               	   default -> System.out.println("lựa chọn không hợp lệ ! vui lòng nhập lại !");
                         	   }
                         	}
-                        case 5 -> studentService.showAll();
+                        case 5 -> studentService.showAll(); 
+                        default -> System.out.println("lựa chọn không hợp lệ ! vui lòng nhập lại !");
                     }
                 }
       
@@ -165,6 +167,7 @@ public class Main {
                 }
 
                 case 0 -> System.out.println("💾 Thoát chương trình, dữ liệu đã lưu!");
+                default -> System.out.println("lựa chọn không hợp lệ ! vui lòng nhập lại !");
             }
 
             // Auto save sau mỗi thao tác
