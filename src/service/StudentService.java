@@ -36,6 +36,16 @@ public class StudentService {
             System.out.println("❌ Không tìm thấy sinh viên!");
         }
     }
+    
+    public Student findStudentbyName(String name) {
+    	for(Student s : students) {
+    		if (s.getName().equalsIgnoreCase(name)) {
+    			return s;
+    		}
+    		
+    	}
+    	return null;
+    }
 
     public Student findStudent(String id) {
         for (Student s : students) {
