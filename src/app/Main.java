@@ -10,11 +10,58 @@ public class Main {
         StudentService studentService = new StudentService();
         SubjectService subjectService = new SubjectService();
         GradeService gradeService = new GradeService();
+        AuthService authService = new AuthService();
 
         // Load dữ liệu khi khởi động
         studentService.loadFromFile();
         subjectService.loadFromFile();
         gradeService.loadFromFile();
+        authService.loadFromFile();
+        
+        user currentUser = null;
+
+        while (currentUser == null) {
+            System.out.println("\n===== ĐĂNG NHẬP / ĐĂNG KÝ =====");
+            System.out.println("1. Đăng nhập");
+            System.out.println("2. Đăng ký");
+            System.out.println("0. Thoát");
+            System.out.print("Chọn: ");
+            int authChoice = Integer.parseInt(sc.nextLine());
+
+            switch (authChoice) {
+                case 1 -> {
+                    System.out.print("Tên đăng nhập: ");
+                    String username = sc.nextLine();
+                    System.out.print("Mật khẩu: ");
+                    String password = sc.nextLine();
+
+                    user u = authService.Login(username, password);
+                    if (u != null) {
+                        currentUser = u;
+                        System.out.println("✅ Đăng nhập thành công! Xin chào " + u.getUserName());
+                    } else {
+                        System.out.println("❌ Sai tài khoản hoặc mật khẩu!");
+                    }
+                }
+                case 2 -> {
+                    System.out.print("Tên đăng nhập mới: ");
+                    String username = sc.nextLine();
+                    System.out.print("Mật khẩu mới: ");
+                    String password = sc.nextLine();
+                    System.out.print("Vai trò (admin/student): ");
+                    String role = sc.nextLine();
+
+                    authService.Register(username, password, role);
+                    authService.saveToFile(); // lưu ngay sau khi đăng ký
+                    System.out.println("✅ Đăng ký thành công! Hãy đăng nhập.");
+                }
+                case 0 -> {
+                    System.out.println("💾 Thoát chương trình");
+                    System.exit(0);
+                }
+                default -> System.out.println("❌ Lựa chọn không hợp lệ!");
+            }
+        }
 
         int choice;
         do {
@@ -22,11 +69,19 @@ public class Main {
             System.out.println("1. Quản lý sinh viên");
             System.out.println("2. Quản lý môn học");
             System.out.println("3. Nhập/Sửa điểm");
-            System.out.println("4. Xem bảng điểm");
+            System.out.println("4. Xem bảng điểm của sinh viên");
             System.out.println("5. Sắp xếp theo tên / GPA");
+            System.out.println("6. Đổi mật khẩu");
             System.out.println("0. Thoát");
             System.out.print("Chọn: ");
             choice = Integer.parseInt(sc.nextLine());
+            
+            if (currentUser.getRole().equalsIgnoreCase("student")) {
+                if (choice == 1 || choice == 2 || choice == 3) {
+                    System.out.println("❌ Bạn không có quyền thực hiện chức năng này!");
+                    continue; // bỏ qua, không chạy case
+                }
+            }
 
             switch (choice) {
                 case 1 -> {
@@ -165,6 +220,17 @@ public class Main {
                                         gradeService.calculateGPA(s.getId())));
                     }
                 }
+                
+                case 6 -> {
+                	System.out.print("Nhập mật khẩu cũ: ");
+                    String oldPass = sc.nextLine();
+                    authService.Check(currentUser, oldPass);
+                	  
+                	// Bước 2: Chỉ chạy tới đây nếu mật khẩu cũ đúng
+                	System.out.print("Nhập mật khẩu mới: ");
+                	String newPass = sc.nextLine();
+                	authService.changePassword(currentUser, oldPass, newPass);
+                }
 
                 case 0 -> System.out.println("💾 Thoát chương trình, dữ liệu đã lưu!");
                 default -> System.out.println("lựa chọn không hợp lệ ! vui lòng nhập lại !");
@@ -174,7 +240,8 @@ public class Main {
             studentService.saveToFile();
             subjectService.saveToFile();
             gradeService.saveToFile();
-
+            authService.saveToFile();
+            
         } while (choice != 0);
     }
 }

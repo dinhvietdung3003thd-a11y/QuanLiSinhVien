@@ -32,6 +32,16 @@ public class SubjectService {
         }
         return null;
     }
+    
+    public String getSubjectNameById(String id) {
+        for (Subject s : subjects) {
+            if (s.getId().equalsIgnoreCase(id)) {
+                return s.getName();
+            }
+        }
+        return "Không rõ môn";
+    }
+
 
     public void showAll() {
         if (subjects.isEmpty()) {

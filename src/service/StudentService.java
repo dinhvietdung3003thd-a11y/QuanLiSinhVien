@@ -53,6 +53,16 @@ public class StudentService {
         }
         return null;
     }
+    
+    public String getStudentNameById(String id) {
+        for (Student s : students) {
+            if (s.getId().equalsIgnoreCase(id)) {
+                return s.getName();
+            }
+        }
+        return null;
+    }
+
 
     public void showAll() {
         if (students.isEmpty()) {
