@@ -26,6 +26,32 @@ public class GradeService {
                 list.add(g);
         return list;
     }
+    
+    public void showGradesByStudent(String studentId, StudentService studentService, SubjectService subjectService) {
+        String studentName = studentService.getStudentNameById(studentId);
+        if (studentName == null) {
+            System.out.println("❌ Không tìm thấy sinh viên có ID: " + studentId);
+            return;
+        }
+
+        System.out.println("\nBảng điểm của sinh viên: " + studentName);
+        System.out.println("---------------------------------------");
+
+        boolean found = false;
+        for (Grade g : grades) {
+            if (g.getStudentId().equalsIgnoreCase(studentId)) {
+                String subjectName = subjectService.getSubjectNameById(g.getSubjectId());
+                System.out.println(subjectName + ": " + g.getScore());
+                found = true;
+            }
+        }
+
+        if (!found) {
+            System.out.println("⚠️ Sinh viên này chưa có điểm!");
+        }
+
+        System.out.println("---------------------------------------");
+    }
 
     public double calculateGPA(String sid) {
         List<Grade> list = getGradesByStudent(sid);
