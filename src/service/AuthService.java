@@ -28,25 +28,25 @@ public class AuthService {
 		return null;
 	}
 	
-	public void Check(user currentUser, String oldPass) {
+	public boolean check(user currentUser, String oldPass) {
 		int attempts = 0;
-    	boolean oldPassCorrect = false;
 
     	// Bước 1: Nhập mật khẩu cũ và kiểm tra
-    	while (attempts < 3 && !oldPassCorrect) {
+    	while (attempts < 3 ) {
     	    if (currentUser.getPassWord().equals(oldPass)) {
-    	        oldPassCorrect = true; 
+    	        return true; 
     	    } else {
     	        attempts++;
     	        System.out.println("Sai mật khẩu! Thử lại (" + attempts + "/3)");
     	    }
+    	    if (attempts < 3) {
+    	    	System.out.print("Nhập lại mật khẩu :");
+    	    	oldPass = new Scanner(System.in).nextLine();
+    	    }
     	}
-
-    	// Nếu sau 3 lần vẫn sai → thoát
-    	if (!oldPassCorrect) {
+         // Nếu sau 3 lần vẫn sai → thoát
     	    System.out.println("Bạn đã nhập sai quá 3 lần. Không thể đổi mật khẩu!");
-    	    return;
-    	}
+    	    return false;
 	}
 	public void changePassword(user currentUser, String oldPass, String newPass) {
 	    currentUser.SetPassWord(newPass);

@@ -224,12 +224,13 @@ public class Main {
                 case 6 -> {
                 	System.out.print("Nhập mật khẩu cũ: ");
                     String oldPass = sc.nextLine();
-                    authService.Check(currentUser, oldPass);
-                	  
                 	// Bước 2: Chỉ chạy tới đây nếu mật khẩu cũ đúng
+                    boolean i = authService.check(currentUser, oldPass);
+                    if(i == true) {
                 	System.out.print("Nhập mật khẩu mới: ");
                 	String newPass = sc.nextLine();
                 	authService.changePassword(currentUser, oldPass, newPass);
+                    }
                 }
 
                 case 0 -> System.out.println("💾 Thoát chương trình, dữ liệu đã lưu!");
