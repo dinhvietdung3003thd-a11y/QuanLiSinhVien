@@ -7,34 +7,26 @@ import java.util.*;
 public class StudentService {
     private List<Student> students = new ArrayList<>();
 
+    public void CheckID(String id) {
+    	
+    }
+    
     public void addStudent(Student s) {
-        if (findStudent(s.getId()) != null) {
-            System.out.println("⚠️ ID sinh viên đã tồn tại!");
-            return;
-        }
         students.add(s);
         System.out.println("✅ Thêm sinh viên thành công!");
     }
 
     public void updateStudent(String id, String newName, String newEmail) {
         Student s = findStudent(id);
-        if (s != null) {
             s.setName(newName);
             s.setEmail(newEmail);
             System.out.println("✅ Cập nhật thành công!");
-        } else {
-            System.out.println("❌ Không tìm thấy sinh viên!");
-        }
     }
 
     public void deleteStudent(String id) {
         Student s = findStudent(id);
-        if (s != null) {
             students.remove(s);
             System.out.println("✅ Đã xóa!");
-        } else {
-            System.out.println("❌ Không tìm thấy sinh viên!");
-        }
     }
     
     public Student findStudentbyName(String name) {
