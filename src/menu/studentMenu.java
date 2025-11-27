@@ -28,6 +28,10 @@ public class studentMenu {
     }
 
 	public void showStudentMenu() {
+		studentService.loadFromFile();
+        subjectService.loadFromFile();
+        gradeService.loadFromFile();
+        authService.loadFromFile();
         int choice;
         do {
             System.out.println("\n===== MENU =====");
@@ -98,7 +102,11 @@ public class studentMenu {
 
                 case 0 -> System.out.println("💾 Thoát chương trình, dữ liệu đã lưu!");
                 default -> System.out.println("lựa chọn không hợp lệ ! vui lòng nhập lại !");
-            }            
+            }        
+            studentService.saveToFile();
+            subjectService.saveToFile();
+            gradeService.saveToFile();
+            authService.saveToFile();
         } while (choice != 0);
     }
 }
