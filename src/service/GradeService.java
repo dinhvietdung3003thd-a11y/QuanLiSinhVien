@@ -1,79 +1,80 @@
 package service;
 
 import model.Grade;
-import util.FileUtils;
-import java.util.*;
+import util.DatabaseConnection;
+import java.sql.*;
+import java.util.ArrayList;
+import java.util.List;
 
 public class GradeService {
-    private List<Grade> grades = new ArrayList<>();
 
+    // Thêm hoặc Cập nhật điểm
+    // Sử dụng cú pháp đặc biệt của MySQL: ON DUPLICATE KEY UPDATE
+    // Nếu chưa có điểm -> Thêm mới. Nếu có rồi -> Cập nhật điểm mới.
     public void addOrUpdateGrade(String sid, String subid, double score) {
-        for (Grade g : grades) {
-            if (g.getStudentId().equalsIgnoreCase(sid) && g.getSubjectId().equalsIgnoreCase(subid)) {
-                g.setScore(score);
-                System.out.println("✅ Đã cập nhật điểm!");
-                return;
-            }
+        String sql = "INSERT INTO grades (student_id, subject_id, score) VALUES (?, ?, ?) " +
+                     "ON DUPLICATE KEY UPDATE score = ?";
+        
+        try (Connection conn = DatabaseConnection.getConnection();
+             PreparedStatement stmt = conn.prepareStatement(sql)) {
+            
+            stmt.setString(1, sid);
+            stmt.setString(2, subid);
+            stmt.setDouble(3, score);
+            stmt.setDouble(4, score); // Tham số thứ 4 là giá trị update
+            
+            stmt.executeUpdate();
+            System.out.println("✅ Đã lưu điểm vào Database!");
+            
+        } catch (SQLException e) {
+            // Lỗi thường gặp: Nhập mã sinh viên hoặc mã môn học không tồn tại
+            System.out.println("❌ Lỗi: Mã SV hoặc Mã MH không tồn tại trong hệ thống.");
+            e.printStackTrace();
         }
-        grades.add(new Grade(sid, subid, score));
-        System.out.println("✅ Nhập điểm thành công!");
     }
 
+    // Lấy danh sách điểm của 1 sinh viên
     public List<Grade> getGradesByStudent(String sid) {
         List<Grade> list = new ArrayList<>();
-        for (Grade g : grades)
-            if (g.getStudentId().equalsIgnoreCase(sid))
-                list.add(g);
+        String sql = "SELECT * FROM grades WHERE student_id = ?";
+        
+        try (Connection conn = DatabaseConnection.getConnection();
+             PreparedStatement stmt = conn.prepareStatement(sql)) {
+            
+            stmt.setString(1, sid);
+            ResultSet rs = stmt.executeQuery();
+            
+            while (rs.next()) {
+                list.add(new Grade(
+                    rs.getString("student_id"),
+                    rs.getString("subject_id"),
+                    rs.getDouble("score")
+                ));
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
         return list;
     }
-    
-    public void showGradesByStudent(String studentId, StudentService studentService, SubjectService subjectService) {
-        String studentName = studentService.getStudentNameById(studentId);
-        if (studentName == null) {
-            System.out.println("❌ Không tìm thấy sinh viên có ID: " + studentId);
-            return;
-        }
 
-        System.out.println("\nBảng điểm của sinh viên: " + studentName);
-        System.out.println("---------------------------------------");
-
-        boolean found = false;
-        for (Grade g : grades) {
-            if (g.getStudentId().equalsIgnoreCase(studentId)) {
-                String subjectName = subjectService.getSubjectNameById(g.getSubjectId());
-                System.out.println(subjectName + ": " + g.getScore());
-                found = true;
-            }
-        }
-
-        if (!found) {
-            System.out.println("⚠️ Sinh viên này chưa có điểm!");
-        }
-
-        System.out.println("---------------------------------------");
-    }
-
+    // Tính điểm trung bình (GPA)
+    // Tận dụng hàm AVG() của SQL để tính cho nhanh
     public double calculateGPA(String sid) {
-        List<Grade> list = getGradesByStudent(sid);
-        if (list.isEmpty()) return 0;
-        double sum = 0;
-        for (Grade g : list) sum += g.getScore();
-        return sum / list.size();
-    }
-
-    public void saveToFile() {
-        List<String> lines = new ArrayList<>();
-        for (Grade g : grades)
-            lines.add(g.getStudentId() + "," + g.getSubjectId() + "," + g.getScore());
-        FileUtils.writeFile("grades.csv", lines);
-    }
-
-    public void loadFromFile() {
-        List<String> lines = FileUtils.readFile("grades.csv");
-        for (String line : lines) {
-            String[] p = line.split(",");
-            if (p.length >= 3)
-                grades.add(new Grade(p[0], p[1], Double.parseDouble(p[2])));
+        String sql = "SELECT AVG(score) as gpa FROM grades WHERE student_id = ?";
+        try (Connection conn = DatabaseConnection.getConnection();
+             PreparedStatement stmt = conn.prepareStatement(sql)) {
+            
+            stmt.setString(1, sid);
+            ResultSet rs = stmt.executeQuery();
+            
+            if (rs.next()) {
+                double gpa = rs.getDouble("gpa");
+                // Nếu sinh viên chưa có điểm nào, gpa sẽ là 0.0 hoặc null -> 0
+                return gpa;
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
         }
+        return 0.0;
     }
 }
