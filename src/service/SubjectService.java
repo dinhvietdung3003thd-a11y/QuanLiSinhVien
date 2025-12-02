@@ -1,72 +1,97 @@
 package service;
 
 import model.Subject;
-import util.FileUtils;
-import java.util.*;
+import util.DatabaseConnection;
+import java.sql.*;
+import java.util.ArrayList;
+import java.util.List;
 
 public class SubjectService {
-    private List<Subject> subjects = new ArrayList<>();
 
+    // Lấy tất cả môn học
+    public List<Subject> getAll() {
+        List<Subject> list = new ArrayList<>();
+        String sql = "SELECT * FROM subjects";
+        try (Connection conn = DatabaseConnection.getConnection();
+             PreparedStatement stmt = conn.prepareStatement(sql);
+             ResultSet rs = stmt.executeQuery()) {
+            
+            while (rs.next()) {
+                list.add(new Subject(
+                    rs.getString("id"),
+                    rs.getString("name"),
+                    rs.getInt("credits")
+                ));
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        return list;
+    }
+
+    // Thêm môn học
     public void addSubject(Subject s) {
-        if (findSubject(s.getId()) != null) {
-            System.out.println("⚠️ ID môn học đã tồn tại!");
-            return;
+        String sql = "INSERT INTO subjects (id, name, credits) VALUES (?, ?, ?)";
+        try (Connection conn = DatabaseConnection.getConnection();
+             PreparedStatement stmt = conn.prepareStatement(sql)) {
+            
+            stmt.setString(1, s.getId());
+            stmt.setString(2, s.getName());
+            stmt.setInt(3, s.getCredits());
+            
+            stmt.executeUpdate();
+            System.out.println("✅ Thêm môn học thành công!");
+        } catch (Exception e) {
+            System.out.println("❌ Lỗi: Mã môn học có thể đã tồn tại.");
         }
-        subjects.add(s);
-        System.out.println("✅ Thêm môn học thành công!");
     }
 
+    // Xóa môn học
     public void deleteSubject(String id) {
-        Subject s = findSubject(id);
-        if (s != null) {
-            subjects.remove(s);
-            System.out.println("✅ Đã xóa môn học!");
-        } else {
-            System.out.println("❌ Không tìm thấy môn học!");
+        String sql = "DELETE FROM subjects WHERE id = ?";
+        try (Connection conn = DatabaseConnection.getConnection();
+             PreparedStatement stmt = conn.prepareStatement(sql)) {
+            
+            stmt.setString(1, id);
+            int rows = stmt.executeUpdate();
+            if(rows > 0) System.out.println("✅ Đã xóa môn học!");
+            else System.out.println("❌ Không tìm thấy môn học để xóa.");
+            
+        } catch (Exception e) {
+            e.printStackTrace();
         }
     }
 
+    // Lấy tên môn học theo ID (Hỗ trợ hiển thị bảng điểm)
+    public String getSubjectNameById(String id) {
+        String sql = "SELECT name FROM subjects WHERE id = ?";
+        try (Connection conn = DatabaseConnection.getConnection();
+             PreparedStatement stmt = conn.prepareStatement(sql)) {
+            
+            stmt.setString(1, id);
+            ResultSet rs = stmt.executeQuery();
+            if (rs.next()) return rs.getString("name");
+            
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        return "Không rõ";
+    }
+    
+    // Tìm môn học (để kiểm tra tồn tại)
     public Subject findSubject(String id) {
-        for (Subject s : subjects) {
-            if (s.getId().equalsIgnoreCase(id)) return s;
+         String sql = "SELECT * FROM subjects WHERE id = ?";
+         try (Connection conn = DatabaseConnection.getConnection();
+             PreparedStatement stmt = conn.prepareStatement(sql)) {
+            
+            stmt.setString(1, id);
+            ResultSet rs = stmt.executeQuery();
+            if (rs.next()) {
+                return new Subject(rs.getString("id"), rs.getString("name"), rs.getInt("credits"));
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
         }
         return null;
     }
-    
-    public String getSubjectNameById(String id) {
-        for (Subject s : subjects) {
-            if (s.getId().equalsIgnoreCase(id)) {
-                return s.getName();
-            }
-        }
-        return "Không rõ môn";
-    }
-
-
-    public void showAll() {
-        if (subjects.isEmpty()) {
-            System.out.println("❌ Chưa có môn học nào!");
-            return;
-        }
-        subjects.forEach(System.out::println);
-    }
-
-    // ==== File I/O ====
-    public void saveToFile() {
-        List<String> lines = new ArrayList<>();
-        for (Subject s : subjects)
-            lines.add(s.getId() + "," + s.getName() + "," + s.getCredits());
-        FileUtils.writeFile("subjects.csv", lines);
-    }
-
-    public void loadFromFile() {
-        List<String> lines = FileUtils.readFile("subjects.csv");
-        for (String line : lines) {
-            String[] p = line.split(",");
-            if (p.length >= 3 && findSubject(p[0]) == null)
-                subjects.add(new Subject(p[0], p[1], Integer.parseInt(p[2])));
-        }
-    }
-
-    public List<Subject> getAll() { return subjects; }
 }
