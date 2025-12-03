@@ -3,6 +3,7 @@ package view;
 import model.Grade;
 import model.user;
 import service.GradeService;
+import service.StudentService;
 import service.SubjectService;
 
 import javax.swing.*;
@@ -11,6 +12,11 @@ import java.awt.*;
 import java.util.List;
 
 public class StudentPortalView extends JFrame {
+	/**
+	 * khai báo phiên bản
+	 */
+	private static final long serialVersionUID = 1L;
+	private StudentService studentService = new StudentService();
     private GradeService gradeService = new GradeService();
     private SubjectService subjectService = new SubjectService();
     private user currentUser;
@@ -24,7 +30,12 @@ public class StudentPortalView extends JFrame {
         setLayout(new BorderLayout());
 
         // Header
-        JLabel lblHello = new JLabel("Xin chào sinh viên: " + u.getUserName(), SwingConstants.CENTER);
+        String realName = studentService.getStudentNameById(u.getUserName());
+        // Nếu không tìm thấy tên (ví dụ admin mới tạo user nhưng chưa tạo hồ sơ SV)
+        if (realName == null) {
+            realName = u.getUserName();
+        }
+        JLabel lblHello = new JLabel("Xin chào sinh viên : " + realName, SwingConstants.CENTER);
         lblHello.setFont(new Font("Arial", Font.BOLD, 18));
         lblHello.setBorder(BorderFactory.createEmptyBorder(15,0,15,0));
         add(lblHello, BorderLayout.NORTH);
@@ -53,14 +64,22 @@ public class StudentPortalView extends JFrame {
         lblGpa.setFont(new Font("Arial", Font.BOLD, 16));
         lblGpa.setForeground(Color.RED);
         
+        // nút đăng xuất
         JButton btnLogout = new JButton("Đăng Xuất");
         btnLogout.addActionListener(e -> {
             dispose();
             new LoginView().setVisible(true);
         });
+        
+        //nút đổi mật khẩu
+        JButton btnChangePass = new JButton("Đổi Mật Khẩu");
+        btnChangePass.addActionListener(e -> {
+            new ChangePasswordView(currentUser).setVisible(true);
+        });
 
         footer.add(lblGpa);
         footer.add(Box.createHorizontalStrut(50)); // Khoảng cách
+        footer.add(btnChangePass);
         footer.add(btnLogout);
         add(footer, BorderLayout.SOUTH);
     }
