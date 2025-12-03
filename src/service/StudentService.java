@@ -21,7 +21,7 @@ public class StudentService {
                     rs.getString("id"),
                     rs.getString("name"),
                     rs.getString("email")
-                ));	
+                ));
             }
         } catch (Exception e) {
             e.printStackTrace();
@@ -98,21 +98,34 @@ public class StudentService {
         return null;
     }
 
-    // Tìm theo Tên (Tìm gần đúng - LIKE)
-    public Student findStudentbyName(String name) {
-        String sql = "SELECT * FROM students WHERE name LIKE ?";
+ // --- HÀM MỚI: Dành riêng cho nút Tìm Kiếm trên giao diện ---
+    public List<Student> searchStudent(String keyword) {
+        List<Student> list = new ArrayList<>();
+        
+        // 1. Dùng OR để tìm cả 2 cột cùng lúc
+        // 2. Trả về List (Danh sách) thay vì 1 đối tượng đơn lẻ
+        String sql = "SELECT * FROM students WHERE id LIKE ? OR name LIKE ?";
+        
         try (Connection conn = DatabaseConnection.getConnection();
              PreparedStatement stmt = conn.prepareStatement(sql)) {
             
-            stmt.setString(1, "%" + name + "%"); 
+            String query = "%" + keyword + "%"; 
+            stmt.setString(1, query);
+            stmt.setString(2, query);
+            
             ResultSet rs = stmt.executeQuery();
-            if (rs.next()) {
-                return new Student(rs.getString("id"), rs.getString("name"), rs.getString("email"));
+            // Dùng vòng lặp while để lấy TẤT CẢ kết quả tìm được
+            while (rs.next()) {
+                list.add(new Student(
+                    rs.getString("id"),
+                    rs.getString("name"),
+                    rs.getString("email")
+                ));
             }
         } catch (Exception e) {
             e.printStackTrace();
         }
-        return null;
+        return list;
     }
     
     // Lấy tên theo ID (Dùng cho bảng điểm)

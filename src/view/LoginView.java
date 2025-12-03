@@ -6,7 +6,11 @@ import javax.swing.*;
 import java.awt.*;
 
 public class LoginView extends JFrame {
-    private AuthService authService = new AuthService();
+    /**
+	 * khai báo phiên bản 
+	 */
+	private static final long serialVersionUID = 1L;
+	private AuthService authService = new AuthService();
     private JTextField txtUsername;
     private JPasswordField txtPassword;
 
