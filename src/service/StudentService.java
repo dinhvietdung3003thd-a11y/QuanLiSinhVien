@@ -5,8 +5,19 @@ import util.DatabaseConnection;
 import java.sql.*;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.regex.Pattern;
 
 public class StudentService {
+	// 1. Định nghĩa mẫu Regex chuẩn cho Email
+    // Mẫu này yêu cầu: [tên]@[domain].[đuôi] (ví dụ: abc@gmail.com)
+    private static final String EMAIL_PATTERN = 
+        "^[A-Za-z0-9+_.-]+@[A-Za-z0-9.-]+\\.[A-Za-z]{2,6}$";
+
+    // 2. Hàm phụ để kiểm tra tính hợp lệ
+    private boolean isValidEmail(String email) {
+        if (email == null) return false;
+        return Pattern.matches(EMAIL_PATTERN, email);
+    }
 
     // --- 1. LOGIC LẤY DỮ LIỆU (Thay thế cho getAll cũ) ---
     public List<Student> getAll() {
@@ -29,9 +40,16 @@ public class StudentService {
         return list;
     }
 
-    // --- 2. LOGIC THÊM (addStudent) ---
-    public boolean addStudent(Student s) {
+ // --- 2. LOGIC THÊM (Cập nhật: Dùng Exception để báo lỗi cụ thể) ---
+    public void addStudent(Student s) throws Exception {
+        // 1. Check Email trước
+        if (!isValidEmail(s.getEmail())) {
+            // Ném ra lỗi cụ thể để GUI bắt được
+            throw new Exception("Email không đúng định dạng (ví dụ: abc@gmail.com)!");
+        }
+
         String sql = "INSERT INTO students (id, name, email) VALUES (?, ?, ?)";
+        
         try (Connection conn = DatabaseConnection.getConnection();
              PreparedStatement stmt = conn.prepareStatement(sql)) {
             
@@ -39,11 +57,15 @@ public class StudentService {
             stmt.setString(2, s.getName());
             stmt.setString(3, s.getEmail());
             
-            // executeUpdate trả về số dòng bị ảnh hưởng (>0 là thành công)
-            return stmt.executeUpdate() > 0;
+            stmt.executeUpdate(); // Nếu chạy qua dòng này mà không lỗi -> Thành công
+            
+        } catch (SQLIntegrityConstraintViolationException e) {
+            // Lỗi này chắc chắn là trùng khóa chính (ID)
+            throw new Exception("Mã sinh viên " + s.getId() + " đã tồn tại!");
         } catch (Exception e) {
-            System.out.println("❌ Lỗi: Mã SV trùng hoặc mất kết nối DB.");
-            return false;
+            // Các lỗi DB khác (mất mạng, sai tên bảng...)
+            e.printStackTrace();
+            throw new Exception("Lỗi kết nối cơ sở dữ liệu: " + e.getMessage());
         }
     }
 
@@ -138,7 +160,11 @@ public class StudentService {
     // Thay vì void, hàm này trả về List đã sắp xếp để giao diện Swing hiển thị
     public List<Student> getStudentsSortedByName() {
         List<Student> list = new ArrayList<>();
-        String sql = "SELECT * FROM students ORDER BY name ASC";
+        
+        // 1. SUBSTRING_INDEX... : Sắp xếp theo tên (Anh)
+        // 2. , name ASC         : Nếu tên trùng, sắp xếp theo cả chuỗi (Hoàng Anh < Phương Anh)
+        String sql = "SELECT * FROM students ORDER BY SUBSTRING_INDEX(name, ' ', -1) ASC, name ASC";
+
         try (Connection conn = DatabaseConnection.getConnection();
              PreparedStatement stmt = conn.prepareStatement(sql);
              ResultSet rs = stmt.executeQuery()) {

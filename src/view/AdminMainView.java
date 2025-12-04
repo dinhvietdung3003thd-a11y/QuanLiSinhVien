@@ -125,12 +125,27 @@ public class AdminMainView extends JFrame {
 
         // Nút Thêm
         btnAdd.addActionListener(e -> {
-            if(studentService.addStudent(new Student(txtId.getText(), txtName.getText(), txtEmail.getText()))) {
+        	try {
+                // 1. Lấy dữ liệu
+                Student s = new Student(txtId.getText(), txtName.getText(), txtEmail.getText());
+
+                // 2. Gọi hàm thêm (Không dùng IF nữa)
+                // Nếu có lỗi (Email sai hoặc Trùng mã), nó sẽ nhảy ngay xuống phần catch
+                studentService.addStudent(s);
+
+                // 3. Nếu chạy đến dòng này nghĩa là thành công
                 JOptionPane.showMessageDialog(this, "✅ Thêm thành công!");
-                loadData.run();
-                txtId.setText(""); txtName.setText(""); txtEmail.setText("");
-            } else {
-                JOptionPane.showMessageDialog(this, "❌ Thất bại! Mã SV trùng.");
+                loadData.run(); // Load lại bảng
+                
+                // Xóa trắng form
+                txtId.setText(""); 
+                txtName.setText(""); 
+                txtEmail.setText("");
+
+            } catch (Exception ex) {
+                // 4. Bắt lỗi và hiện thông báo cụ thể
+                // ex.getMessage() sẽ hiện: "Email không đúng..." HOẶC "Mã sinh viên đã tồn tại!"
+                JOptionPane.showMessageDialog(this, "❌ " + ex.getMessage());
             }
         });
         
