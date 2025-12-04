@@ -151,10 +151,24 @@ public class AdminMainView extends JFrame {
         
         // Nút Sửa
         btnUpdate.addActionListener(e -> {
-            if(studentService.updateStudent(txtId.getText(), txtName.getText(), txtEmail.getText())) {
+            try {
+            	if (txtId.getText().trim().isEmpty() || txtName.getText().trim().isEmpty()) {
+                    JOptionPane.showMessageDialog(this, "⚠️ Vui lòng nhập Mã và Tên môn học!", "Thiếu thông tin", JOptionPane.WARNING_MESSAGE);
+                    return;
+                }
+                // 1. Gọi hàm xử lý (Không cần if nữa)
+                // Nếu có lỗi (email sai, trùng ID...), nó sẽ tự nhảy xuống catch
+                studentService.updateStudent(txtId.getText(), txtName.getText(), txtEmail.getText());
+
+                // 2. Nếu chạy đến dòng này tức là thành công
                 JOptionPane.showMessageDialog(this, "✅ Cập nhật thành công!");
-                loadData.run();
-            } else { JOptionPane.showMessageDialog(this, "❌ Lỗi cập nhật!"); }
+                loadData.run(); // Tải lại bảng
+                
+            } catch (Exception ex) {
+                // 3. Bắt lỗi: ex.getMessage() sẽ hiện ra dòng chữ bạn đã viết bên Service
+                // Ví dụ: "Email không đúng định dạng" hoặc "Không tìm thấy ID"
+                JOptionPane.showMessageDialog(this, "❌ " + ex.getMessage(), "Lỗi", JOptionPane.ERROR_MESSAGE);
+            }
         });
         
         // Nút Xóa
@@ -167,7 +181,7 @@ public class AdminMainView extends JFrame {
             }
         });
         
-        // --- LOGIC SẮP XẾP (ĐÃ THÊM LẠI) ---
+        // Nút sắp xếp
         btnSort.addActionListener(e -> {
             // Gọi hàm getStudentsSortedByName trong Service (đã viết từ bước trước)
             List<Student> sortedList = studentService.getStudentsSortedByName();
@@ -238,16 +252,46 @@ public class AdminMainView extends JFrame {
             for (Subject s : subjectService.getAll()) 
                 model.addRow(new Object[]{s.getId(), s.getName(), s.getCredits()});
         };
-
+       //nút thêm
         btnAdd.addActionListener(e -> {
             try {
+                // 1. Kiểm tra dữ liệu đầu vào (Validation)
+                if (txtId.getText().trim().isEmpty() || txtName.getText().trim().isEmpty()) {
+                    JOptionPane.showMessageDialog(this, "⚠️ Vui lòng nhập Mã và Tên môn học!", "Thiếu thông tin", JOptionPane.WARNING_MESSAGE);
+                    return;
+                }
                 int credit = Integer.parseInt(txtCredit.getText());
-                subjectService.addSubject(new Subject(txtId.getText(), txtName.getText(), credit));
-                loadData.run();
-                JOptionPane.showMessageDialog(this, "✅ Đã thêm!");
-            } catch (Exception ex) { JOptionPane.showMessageDialog(this, "❌ Tín chỉ phải là số!"); }
-        });
+                // 2. Lấy dữ liệu và tạo đối tượng
+                Subject s = new Subject(txtId.getText(), txtName.getText(), credit);
 
+                // 3. Gọi hàm logic và nhận kết quả (True/False)
+                // Lưu ý: Hàm addSubject trong Service phải trả về boolean như đã sửa ở trên
+                boolean isAdded = subjectService.addSubject(s);
+
+                // 4. Kiểm tra kết quả để hiển thị thông báo
+                if (isAdded) {
+                    loadData.run(); // Chỉ load lại bảng khi thêm thành công
+                    
+                    // Reset các ô nhập liệu cho sạch đẹp
+                    txtId.setText("");
+                    txtName.setText("");
+                    txtCredit.setText("");
+                    
+                    JOptionPane.showMessageDialog(this, "✅ Đã thêm môn học thành công!");
+                } else {
+                    // Trường hợp hàm trả về false (do trùng mã trong database)
+                    JOptionPane.showMessageDialog(this, "❌ Thêm thất bại! Có thể Mã môn hoặc Tên môn học đã tồn tại.","Lỗi trùng lặp", JOptionPane.ERROR_MESSAGE);
+                }
+
+            } catch (NumberFormatException ex) {
+                // Bắt lỗi khi nhập chữ vào ô tín chỉ
+                JOptionPane.showMessageDialog(this, "❌ Tín chỉ phải là một số nguyên hợp lệ!", "Lỗi định dạng", JOptionPane.ERROR_MESSAGE);
+            } catch (Exception ex) {
+                // Bắt các lỗi hệ thống khác
+                ex.printStackTrace();
+                JOptionPane.showMessageDialog(this, "❌ Có lỗi xảy ra: " + ex.getMessage());
+            }
+        });
         btnDel.addActionListener(e -> {
             int row = table.getSelectedRow();
             if(row >= 0) {
