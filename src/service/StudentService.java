@@ -70,7 +70,13 @@ public class StudentService {
     }
 
     // --- 3. LOGIC SỬA (updateStudent) ---
-    public boolean updateStudent(String id, String newName, String newEmail) {
+ // Sửa kiểu trả về từ boolean -> void để ném Exception
+    public void updateStudent(String id, String newName, String newEmail) throws Exception {
+        // 1. Validate Email trước khi sửa
+        if (!isValidEmail(newEmail)) {
+            throw new Exception("Email mới không đúng định dạng!");
+        }
+
         String sql = "UPDATE students SET name = ?, email = ? WHERE id = ?";
         try (Connection conn = DatabaseConnection.getConnection();
              PreparedStatement stmt = conn.prepareStatement(sql)) {
@@ -79,10 +85,14 @@ public class StudentService {
             stmt.setString(2, newEmail);
             stmt.setString(3, id);
             
-            return stmt.executeUpdate() > 0;
+            int rows = stmt.executeUpdate();
+            if (rows == 0) {
+                // Trường hợp hy hữu: ID không tồn tại hoặc bị xóa lúc đang sửa
+                throw new Exception("Không tìm thấy sinh viên có ID: " + id);
+            }
         } catch (Exception e) {
             e.printStackTrace();
-            return false;
+            throw new Exception("Lỗi khi cập nhật: " + e.getMessage());
         }
     }
 

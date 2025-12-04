@@ -30,19 +30,40 @@ public class SubjectService {
     }
 
     // Thêm môn học
-    public void addSubject(Subject s) {
-        String sql = "INSERT INTO subjects (id, name, credits) VALUES (?, ?, ?)";
-        try (Connection conn = DatabaseConnection.getConnection();
-             PreparedStatement stmt = conn.prepareStatement(sql)) {
+ // 1. Đổi từ void sang boolean
+    public boolean addSubject(Subject s) {
+        String sqlCheck = "SELECT COUNT(*) FROM subjects WHERE name = ?";
+        String sqlInsert = "INSERT INTO subjects (id, name, credits) VALUES (?, ?, ?)";
+        
+        // Sử dụng 1 kết nối chung cho cả 2 thao tác để tối ưu
+        try (Connection conn = DatabaseConnection.getConnection()) {
             
-            stmt.setString(1, s.getId());
-            stmt.setString(2, s.getName());
-            stmt.setInt(3, s.getCredits());
-            
-            stmt.executeUpdate();
-            System.out.println("✅ Thêm môn học thành công!");
+            // --- BƯỚC 1: KIỂM TRA TÊN MÔN HỌC ---
+            try (PreparedStatement checkStmt = conn.prepareStatement(sqlCheck)) {
+                checkStmt.setString(1, s.getName());
+                ResultSet rs = checkStmt.executeQuery();
+                
+                // Nếu đếm được số lượng > 0 nghĩa là tên đã tồn tại
+                if (rs.next() && rs.getInt(1) > 0) {
+                    System.out.println("❌ Tên môn học '" + s.getName() + "' đã tồn tại!");
+                    return false; // Trả về false ngay, không thêm nữa
+                }
+            }
+
+            // --- BƯỚC 2: THÊM MỚI (Nếu bước 1 qua ải) ---
+            try (PreparedStatement stmt = conn.prepareStatement(sqlInsert)) {
+                stmt.setString(1, s.getId());
+                stmt.setString(2, s.getName());
+                stmt.setInt(3, s.getCredits());
+                
+                int rows = stmt.executeUpdate();
+                return rows > 0; 
+            }
+
         } catch (Exception e) {
-            System.out.println("❌ Lỗi: Mã môn học có thể đã tồn tại.");
+            // Lỗi xảy ra (ví dụ trùng Mã ID hoặc lỗi mạng)
+            System.out.println("❌ Lỗi thêm môn học: " + e.getMessage());
+            return false;
         }
     }
 
