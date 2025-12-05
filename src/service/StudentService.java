@@ -19,7 +19,7 @@ public class StudentService {
         return Pattern.matches(EMAIL_PATTERN, email);
     }
 
-    // --- 1. LOGIC LẤY DỮ LIỆU (Thay thế cho getAll cũ) ---
+    // --- 1. LOGIC LẤY DỮ LIỆU  ---
     public List<Student> getAll() {
         List<Student> list = new ArrayList<>();
         String sql = "SELECT * FROM students";
@@ -98,19 +98,31 @@ public class StudentService {
 
     // --- 4. LOGIC XÓA (deleteStudent) ---
     public boolean deleteStudent(String id) {
+        // Câu lệnh xóa sinh viên (DB sẽ tự động xóa điểm nhờ ON DELETE CASCADE)
         String sql = "DELETE FROM students WHERE id = ?";
+        
         try (Connection conn = DatabaseConnection.getConnection();
              PreparedStatement stmt = conn.prepareStatement(sql)) {
             
             stmt.setString(1, id);
-            return stmt.executeUpdate() > 0;
-        } catch (Exception e) {
-            // Lỗi thường gặp: Sinh viên đã có điểm -> Không xóa được do ràng buộc khóa ngoại
-            System.out.println("❌ Không thể xóa sinh viên này (có thể do đã có bảng điểm).");
+            
+            int rowsAffected = stmt.executeUpdate();
+            
+            if (rowsAffected > 0) {
+                System.out.println("✅ Đã xóa thành công sinh viên và toàn bộ dữ liệu điểm số liên quan.");
+                return true;
+            } else {
+                System.out.println("⚠️ Không tìm thấy sinh viên có ID: " + id + " để xóa.");
+                return false;
+            }
+
+        } catch (SQLException e) {
+            // Lúc này catch chỉ bắt các lỗi kỹ thuật (mất mạng, sai tên bảng, lỗi SQL server...)
+            System.err.println("❌ Lỗi kỹ thuật khi xóa sinh viên: " + e.getMessage());
+            e.printStackTrace();
             return false;
         }
     }
-
     // --- 5. LOGIC TÌM KIẾM (findStudent / findStudentbyName) ---
     
     // Tìm theo ID (Khớp chính xác)
