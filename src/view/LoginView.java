@@ -1,6 +1,6 @@
 package view;
 
-import model.user; // Nếu bạn đã sửa thành User viết hoa thì sửa lại chỗ này nhé
+import model.user; 
 import service.AuthService;
 import javax.swing.*;
 import java.awt.*;
